@@ -1,0 +1,3168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Symmetry Pattern Generator</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f3f4f6;
+            --border-color: #e5e7eb;
+            --panel-background: #ffffff;
+            --text-color: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--panel-background);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-actions button {
+            padding: 8px 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .header-actions button:hover {
+            background: var(--secondary-color);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px minmax(300px, 1fr) 1fr;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            background: var(--panel-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-panel {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .drawing-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .preview-panel {
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-container {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* Tab System Styles */
+        .tab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .tab-header {
+            display: flex;
+            background-color: var(--background-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .tab-button {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        #drawing-tab {
+            max-height: 100%;
+            overflow-y: auto;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+            /* Add space between rows if they wrap */
+        }
+
+        .toolbar button {
+            flex: 1 0 calc(50% - 3px);
+            /* Make buttons take half width minus gap */
+            padding: 6px 8px;
+            /* Smaller padding */
+            font-size: 13px;
+            /* Smaller font */
+            min-width: 60px;
+            /* Ensure minimum width */
+        }
+
+        .toolbar button:hover {
+            background: var(--secondary-color);
+        }
+
+        .toolbar button.active {
+            background: var(--secondary-color);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            padding: 2px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .status-bar {
+            font-size: 14px;
+            color: #666;
+            padding: 8px;
+            background: var(--background-color);
+            border-radius: 4px;
+        }
+
+        /* Drawing canvas controls */
+        .drawing-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .drawing-controls .control-group {
+            flex: 1;
+            min-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        /* Symmetry parameters panel */
+        .symmetry-parameters {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #f9fafb;
+        }
+
+        .parameters-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        /* Responsive layout CSS */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 300px minmax(300px, 1fr);
+                grid-template-rows: auto auto;
+            }
+
+            .preview-panel {
+                grid-column: 1 / -1;
+                grid-row: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+
+            .control-panel,
+            .drawing-panel,
+            .preview-panel {
+                grid-column: 1;
+            }
+
+            .control-panel {
+                grid-row: 1;
+            }
+
+            .drawing-panel {
+                grid-row: 2;
+            }
+
+            .preview-panel {
+                grid-row: 3;
+            }
+
+            .canvas-container {
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+        }
+
+        /* Modal dialog styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: var(--panel-background);
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        /* Pattern library grid */
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pattern-item {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .pattern-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .pattern-preview {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            background-size: cover;
+        }
+
+        .pattern-info {
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        /* Help content styles */
+        .help-content {
+            line-height: 1.6;
+        }
+
+        .help-content section {
+            margin-bottom: 20px;
+        }
+
+        .help-content h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .help-content ul {
+            padding-left: 20px;
+        }
+
+        /* Save controls styles */
+        .save-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Error notification styles */
+        .error-notification {
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+
+        /* Emoji panel styles */
+        .emoji-panel {
+            position: absolute;
+            z-index: 100;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .emoji-category {
+            margin-bottom: 15px;
+        }
+
+        .emoji-category-title {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+
+        .emoji-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            height: 36px;
+            width: 36px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .emoji-item:hover {
+            background-color: var(--background-color);
+        }
+
+        .emoji-search {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .emoji-size-control {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .emoji-size-control label {
+            flex-shrink: 0;
+        }
+
+        .emoji-size-control input {
+            flex-grow: 1;
+        }
+
+        .external-emoji-link {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .external-emoji-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Language selector styles */
+        .language-selector {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1 id="app-title">Symmetry Pattern Generator</h1>
+                    <p id="app-subtitle">Create patterns using 17 wallpaper groups</p>
+                </div>
+                <div class="header-actions">
+                    <button id="openLibraryBtn">
+                        <i class="fas fa-book"></i> <span id="library-btn-text">Pattern Library</span>
+                    </button>
+                    <button id="helpBtn">
+                        <i class="fas fa-question-circle"></i> <span id="help-btn-text">Help</span>
+                    </button>
+                    <select id="languageSelector" class="language-selector">
+                        <option value="en">English</option>
+                        <option value="zh">中文</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Control Panel with Tabs -->
+            <div class="panel control-panel">
+                <div class="tab-container">
+                    <div class="tab-header">
+                        <button class="tab-button active" data-tab="symmetry">Symmetry</button>
+                        <button class="tab-button" data-tab="drawing">Drawing</button>
+                        <button class="tab-button" data-tab="export">Export</button>
+                    </div>
+
+                    <div class="tab-content">
+                        <!-- Symmetry Tab -->
+                        <div id="symmetry-tab" class="tab-panel active">
+                            <div class="control-group">
+                                <label for="symmetryType" id="symmetry-type-label">Symmetry Group</label>
+                                <select id="symmetryType">
+                                    <option value="p1">P1 - No Symmetry</option>
+                                    <option value="p2">P2 - Two-fold Rotations</option>
+                                    <option value="pm">PM - Mirror Lines</option>
+                                    <option value="pg">PG - Glide Reflections</option>
+                                    <option value="pgg">PGG - Two-fold & Glide</option>
+                                    <option value="pmm">PMM - Two Mirror Lines</option>
+                                    <option value="pmg">PMG - Mirrors & Rotations</option>
+                                    <option value="cm">CM - Mirrors & Glide</option>
+                                    <option value="cmm">CMM - Two Mirrors & Rotations</option>
+                                    <option value="p4">P4 - Four-fold Rotations</option>
+                                    <option value="p3m1">P3M1 - Three-fold & Mirrors</option>
+                                    <option value="p3">P3 - Three-fold Rotations</option>
+                                    <option value="p4g">P4G - Four-fold & Glide</option>
+                                    <option value="p4m">P4M - Four-fold & Mirrors</option>
+                                    <option value="p6">P6 - Six-fold Rotations</option>
+                                    <option value="p31m">P31M - Three-fold & Mirrors</option>
+                                    <option value="p6m">P6M - Six-fold & Mirrors</option>
+                                </select>
+                            </div>
+
+                            <!-- Symmetry Parameters Section (will be dynamically populated) -->
+                            <div id="symmetryParameters" class="symmetry-parameters" style="display: none;">
+                                <div class="parameters-title" id="parameters-title">Symmetry Parameters</div>
+                                <div id="parametersContent"></div>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="showGrid" id="show-grid-label">Show Grid</label>
+                                <input type="checkbox" id="showGrid" checked>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="canvasSize" id="canvas-size-label">Canvas Size</label>
+                                <input type="range" id="canvasSize" min="50" max="300" value="200">
+                                <span id="canvasSizeValue">200 x 200</span>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="bgColor" id="bg-color-label">Background Color</label>
+                                <input type="color" id="bgColor" value="#ffffff">
+                            </div>
+                        </div>
+
+                        <!-- Drawing Tools Tab -->
+                        <div id="drawing-tab" class="tab-panel">
+                            <div class="control-group">
+                                <label id="drawing-tools-label">Basic Tools</label>
+                                <div class="toolbar">
+                                    <button id="pencilTool" class="active">Pencil</button>
+                                    <button id="eraserTool">Eraser</button>
+                                    <button id="clearTool">Clear</button>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label id="additional-tools-label">Shape Tools</label>
+                                <div class="toolbar">
+                                    <button id="lineTool">Line</button>
+                                    <button id="rectTool">Rectangle</button>
+                                    <button id="circleTool">Circle</button>
+                                    <button id="emojiTool">Emoji</button>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="lineWidth" id="line-width-label">Line Width</label>
+                                <input type="range" id="lineWidth" min="1" max="20" value="2">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="lineColor" id="line-color-label">Color</label>
+                                <input type="color" id="lineColor" value="#000000">
+                            </div>
+
+                            <div class="control-group">
+                                <label>History</label>
+                                <div class="toolbar">
+                                    <button id="undoBtn" disabled>Undo</button>
+                                    <button id="redoBtn" disabled>Redo</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Tab -->
+                        <div id="export-tab" class="tab-panel">
+                            <div class="control-group">
+                                <label id="export-label">Export Options</label>
+                                <div class="toolbar">
+                                    <button id="exportSingleBtn">Export Single</button>
+                                    <button id="exportTiledBtn">Export Tiled</button>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label id="save-load-label">Save & Load</label>
+                                <div class="save-controls">
+                                    <input type="text" id="patternName" placeholder="Pattern name">
+                                    <div class="toolbar">
+                                        <button id="saveBtn">Save</button>
+                                        <button id="loadBtn">Load</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawing Panel -->
+            <div class="panel drawing-panel">
+                <h3 id="drawing-area-title">Drawing Area</h3>
+                <div class="canvas-container" id="canvasContainer">
+                    <canvas id="drawingCanvas"></canvas>
+                </div>
+                <div class="status-bar">
+                    <span id="coordinates">Position: 0, 0</span>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="panel preview-panel">
+                <h3 id="preview-title">Pattern Preview</h3>
+                <div class="preview-container">
+                    <canvas id="previewCanvas"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Emoji Panel -->
+    <div id="emojiPanel" class="emoji-panel">
+        <input type="text" class="emoji-search" id="emojiSearch" placeholder="Search emojis...">
+        <div id="emojiCategories"></div>
+        <div class="emoji-size-control">
+            <label for="emojiSize" id="emoji-size-label">Size:</label>
+            <input type="range" id="emojiSize" min="10" max="50" value="20">
+        </div>
+        <a href="https://getemoji.com/" class="external-emoji-link" target="_blank" id="get-more-emojis">
+            Get more emojis from getemoji.com
+        </a>
+    </div>
+
+    <!-- Pattern Library Modal -->
+    <div id="patternLibrary" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeLibraryBtn">&times;</span>
+            <h2 id="pattern-library-title">Pattern Library</h2>
+            <div class="patterns-grid" id="patternsGrid">
+                <!-- Patterns will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeHelpBtn">&times;</span>
+            <h2 id="help-title">How to Use</h2>
+            <div class="help-content">
+                <section>
+                    <h3 id="help-getting-started-title">Getting Started</h3>
+                    <p id="help-getting-started-text">
+                        The Symmetry Pattern Generator allows you to create intricate patterns
+                        using mathematical symmetry groups. Start by drawing in the drawing area,
+                        and see your pattern transform live in the preview panel.
+                    </p>
+                </section>
+
+                <section>
+                    <h3 id="help-symmetry-groups-title">Symmetry Groups</h3>
+                    <p id="help-symmetry-groups-text">
+                        Choose from 17 different wallpaper groups to create various symmetrical patterns.
+                        Each symmetry group has parameters you can adjust to customize your pattern.
+                    </p>
+                </section>
+
+                <section>
+                    <h3 id="help-tools-title">Tools</h3>
+                    <p id="help-tools-text">
+                        Use the various drawing tools to create your pattern:
+                    </p>
+                    <ul id="help-tools-list">
+                        <li><strong>Pencil</strong> - Free-hand drawing</li>
+                        <li><strong>Eraser</strong> - Remove parts of your drawing</li>
+                        <li><strong>Line</strong> - Draw straight lines</li>
+                        <li><strong>Rectangle</strong> - Draw rectangles</li>
+                        <li><strong>Circle</strong> - Draw circles</li>
+                        <li><strong>Emoji</strong> - Insert emoji characters</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 id="help-shortcuts-title">Keyboard Shortcuts</h3>
+                    <ul id="help-shortcuts-list">
+                        <li><strong>Ctrl+Z</strong> - Undo</li>
+                        <li><strong>Ctrl+Y</strong> - Redo</li>
+                        <li><strong>Delete</strong> - Clear canvas</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Language translation system
+        const translations = {
+            en: {
+                "app-title": "Symmetry Pattern Generator",
+                "app-subtitle": "Create patterns using 17 wallpaper groups",
+                "library-btn-text": "Pattern Library",
+                "help-btn-text": "Help",
+                "symmetry-type-label": "Symmetry Group",
+                "parameters-title": "Symmetry Parameters",
+                "drawing-tools-label": "Basic Tools",
+                "additional-tools-label": "Shape Tools",
+                "line-width-label": "Line Width",
+                "line-color-label": "Color",
+                "bg-color-label": "Background Color",
+                "show-grid-label": "Show Grid",
+                "canvas-size-label": "Canvas Size",
+                "export-label": "Export Options",
+                "save-load-label": "Save & Load",
+                "drawing-area-title": "Drawing Area",
+                "preview-title": "Pattern Preview",
+                "emoji-size-label": "Size:",
+                "get-more-emojis": "Get more emojis from getemoji.com",
+                "pattern-library-title": "Pattern Library",
+                "help-title": "How to Use",
+                "help-getting-started-title": "Getting Started",
+                "help-getting-started-text": "The Symmetry Pattern Generator allows you to create intricate patterns using mathematical symmetry groups. Start by drawing in the drawing area, and see your pattern transform live in the preview panel.",
+                "help-symmetry-groups-title": "Symmetry Groups",
+                "help-symmetry-groups-text": "Choose from 17 different wallpaper groups to create various symmetrical patterns. Each symmetry group has parameters you can adjust to customize your pattern.",
+                "help-tools-title": "Tools",
+                "help-tools-text": "Use the various drawing tools to create your pattern:",
+                "help-shortcuts-title": "Keyboard Shortcuts",
+                "pencilTool": "Pencil",
+                "eraserTool": "Eraser",
+                "clearTool": "Clear",
+                "lineTool": "Line",
+                "rectTool": "Rectangle",
+                "circleTool": "Circle",
+                "emojiTool": "Emoji",
+                "undoBtn": "Undo",
+                "redoBtn": "Redo",
+                "exportSingleBtn": "Export Single",
+                "exportTiledBtn": "Export Tiled",
+                "saveBtn": "Save",
+                "loadBtn": "Load"
+            },
+            zh: {
+                "app-title": "對稱圖形產生器",
+                "app-subtitle": "使用17種壁紙群創建圖案",
+                "library-btn-text": "圖案庫",
+                "help-btn-text": "幫助",
+                "symmetry-type-label": "對稱群組",
+                "parameters-title": "對稱參數",
+                "drawing-tools-label": "基本工具",
+                "additional-tools-label": "形狀工具",
+                "line-width-label": "線條寬度",
+                "line-color-label": "顏色",
+                "bg-color-label": "背景顏色",
+                "show-grid-label": "顯示網格",
+                "canvas-size-label": "畫布大小",
+                "export-label": "匯出選項",
+                "save-load-label": "保存和加載",
+                "drawing-area-title": "繪圖區域",
+                "preview-title": "模式預覽",
+                "emoji-size-label": "大小：",
+                "get-more-emojis": "從getemoji.com獲取更多表情符號",
+                "pattern-library-title": "圖案庫",
+                "help-title": "如何使用",
+                "help-getting-started-title": "開始使用",
+                "help-getting-started-text": "對稱圖形產生器允許您使用數學對稱群創建複雜的圖案。從繪圖區域開始繪製，即可在預覽面板中實時看到您的圖案變化。",
+                "help-symmetry-groups-title": "對稱群組",
+                "help-symmetry-groups-text": "選擇17種不同的壁紙群來創建各種對稱圖案。每個對稱群組都有可以調整的參數來自定義您的圖案。",
+                "help-tools-title": "工具",
+                "help-tools-text": "使用各種繪圖工具來創建您的圖案：",
+                "help-shortcuts-title": "鍵盤快捷鍵",
+                "pencilTool": "鉛筆",
+                "eraserTool": "橡皮擦",
+                "clearTool": "清除",
+                "lineTool": "直線",
+                "rectTool": "矩形",
+                "circleTool": "圓形",
+                "emojiTool": "表情符號",
+                "undoBtn": "撤銷",
+                "redoBtn": "重做",
+                "exportSingleBtn": "匯出單一",
+                "exportTiledBtn": "匯出平鋪",
+                "saveBtn": "保存",
+                "loadBtn": "加載"
+            }
+        };
+
+        // Function to update UI language
+        function updateLanguage(language) {
+            const elements = document.querySelectorAll('[id]');
+            elements.forEach(element => {
+                const id = element.id;
+                if (translations[language][id]) {
+                    if (element.tagName === 'INPUT' && element.type === 'text' && element.placeholder) {
+                        element.placeholder = translations[language][id];
+                    } else if (element.tagName === 'BUTTON' || element.tagName === 'OPTION') {
+                        element.textContent = translations[language][id];
+                    } else {
+                        element.textContent = translations[language][id];
+                    }
+                }
+            });
+
+            // Update tool buttons which use different ids
+            document.querySelectorAll('.toolbar button').forEach(button => {
+                const id = button.id;
+                if (translations[language][id]) {
+                    button.textContent = translations[language][id];
+                }
+            });
+
+            // Update specific elements like placeholder texts
+            document.getElementById('patternName').placeholder = language === 'en' ? 'Pattern name' : '圖案名稱';
+            document.getElementById('emojiSearch').placeholder = language === 'en' ? 'Search emojis...' : '搜索表情符號...';
+        }
+
+        // Tab system functionality
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and panels
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                    // Add active class to clicked button and corresponding panel
+                    button.classList.add('active');
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+        }
+
+        // Get canvas elements
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // Set initial canvas sizes
+        function initializeCanvases() {
+            // Default size for drawing area
+            drawingCanvas.width = 200;
+            drawingCanvas.height = 200;
+
+            // Update canvas container size
+            canvasContainer.style.width = drawingCanvas.width + 'px';
+            canvasContainer.style.height = drawingCanvas.height + 'px';
+
+            // Larger size for preview area
+            previewCanvas.width = 800;
+            previewCanvas.height = 800;
+        }
+
+        // Initialize canvas sizes on load
+        initializeCanvases();
+
+        // Drawing Manager Class
+        class DrawingManager {
+            constructor(drawingCanvas) {
+                this.drawingCanvas = drawingCanvas;
+                this.ctx = drawingCanvas.getContext('2d');
+
+                // Drawing state
+                this.isDrawing = false;
+                this.lastX = 0;
+                this.lastY = 0;
+
+                // Tool settings
+                this.tool = 'pencil';
+                this.lineWidth = 2;
+                this.lineColor = '#000000';
+                this.previousColor = this.lineColor; // Save previous color
+                this.previousWidth = this.lineWidth; // Save previous width
+                this.backgroundColor = '#ffffff';    // Background color
+
+                this.showGrid = true;
+
+                // Grid settings
+                this.gridSize = 50;
+                this.gridColor = '#ddd';
+
+                this.onDrawingUpdated = null;
+                this.onClear = null;
+                this.onDrawingComplete = null;
+
+                // Initialize
+                this.initializeCanvas();
+                this.setupEventListeners();
+            }
+
+            // Initialize canvas settings
+            initializeCanvas() {
+                // Set drawing context properties
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                this.ctx.strokeStyle = this.lineColor;
+                this.ctx.lineWidth = this.lineWidth;
+
+                // Set initial background
+                this.setBackgroundColor(this.backgroundColor);
+            }
+
+            // Set up event listeners
+            setupEventListeners() {
+                // Use pointer events for multi-device support
+                this.drawingCanvas.addEventListener('pointerdown', this.startDrawing.bind(this));
+                this.drawingCanvas.addEventListener('pointermove', this.draw.bind(this));
+                this.drawingCanvas.addEventListener('pointerup', this.stopDrawing.bind(this));
+                this.drawingCanvas.addEventListener('pointerout', this.stopDrawing.bind(this));
+
+                // Prevent default behavior on touch devices
+                this.drawingCanvas.addEventListener('touchstart', e => e.preventDefault());
+                this.drawingCanvas.addEventListener('touchmove', e => e.preventDefault());
+
+                // Update coordinate display
+                this.drawingCanvas.addEventListener('pointermove', this.updateCoordinates.bind(this));
+            }
+
+            // Start drawing
+            startDrawing(e) {
+                // Skip if not using the basic pencil or eraser tool
+                if (this.tool !== 'pencil' && this.tool !== 'eraser') return;
+
+                this.isDrawing = true;
+                const pos = this.getPointerPosition(e);
+                this.lastX = pos.x;
+                this.lastY = pos.y;
+
+                // Immediately draw a point
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(this.lastX, this.lastY);
+                this.ctx.stroke();
+            }
+
+            // Draw
+            draw(e) {
+                // Skip if not using the basic pencil or eraser tool
+                if (this.tool !== 'pencil' && this.tool !== 'eraser') return;
+                if (!this.isDrawing) return;
+
+                const pos = this.getPointerPosition(e);
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(pos.x, pos.y);
+                this.ctx.stroke();
+
+                [this.lastX, this.lastY] = [pos.x, pos.y];
+
+                // Notify update
+                if (this.onDrawingUpdated) {
+                    this.onDrawingUpdated();
+                }
+            }
+
+            // Stop drawing
+            stopDrawing() {
+                if (this.isDrawing) {
+                    this.isDrawing = false;
+
+                    // Trigger when a stroke is completed
+                    if (this.onDrawingComplete) {
+                        this.onDrawingComplete();
+                    }
+                }
+            }
+
+            // Get pointer position
+            getPointerPosition(e) {
+                const rect = this.drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                return { x, y };
+            }
+
+            // Update coordinate display
+            updateCoordinates(e) {
+                const pos = this.getPointerPosition(e);
+                const coordElement = document.getElementById('coordinates');
+                if (coordElement) {
+                    coordElement.textContent = `Position: ${Math.round(pos.x)}, ${Math.round(pos.y)}`;
+                }
+            }
+
+            // Clear canvas
+            clear() {
+                this.ctx.clearRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+                this.setBackgroundColor(this.backgroundColor);
+                if (this.onClear) {
+                    this.onClear();
+                }
+            }
+
+            // Get canvas data
+            getImageData() {
+                return this.ctx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+            }
+
+            // Set tool
+            setTool(toolName) {
+                this.tool = toolName;
+                if (toolName === 'pencil') {
+                    // Restore previous color and width
+                    this.ctx.strokeStyle = this.previousColor;
+                    this.ctx.lineWidth = this.previousWidth;
+                } else if (toolName === 'eraser') {
+                    // Save current color and width, then set eraser
+                    this.previousColor = this.ctx.strokeStyle;
+                    this.previousWidth = this.ctx.lineWidth;
+                    this.ctx.strokeStyle = this.backgroundColor;
+                    this.ctx.lineWidth = this.previousWidth * 2;
+                }
+            }
+
+            // Set line width
+            setLineWidth(width) {
+                this.lineWidth = width;
+                this.previousWidth = width;
+                // Only update ctx directly when using pencil tool
+                if (this.tool === 'pencil') {
+                    this.ctx.lineWidth = width;
+                } else if (this.tool === 'eraser') {
+                    this.ctx.lineWidth = width * 2; // Eraser keeps double width
+                }
+            }
+
+            // Set line color
+            setLineColor(color) {
+                this.lineColor = color;
+                this.previousColor = color;
+                // Only update color when using pencil tool
+                if (this.tool === 'pencil') {
+                    this.ctx.strokeStyle = color;
+                }
+            }
+
+            // Set background color
+            setBackgroundColor(color) {
+                this.backgroundColor = color;
+
+                // Save current drawing
+                const tempImageData = this.ctx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+
+                // Fill with background color
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+
+                // Restore drawing
+                this.ctx.putImageData(tempImageData, 0, 0);
+
+                // Update eraser color if active
+                if (this.tool === 'eraser') {
+                    this.ctx.strokeStyle = color;
+                }
+            }
+
+            // Resize canvas 
+            resizeCanvas(width, height) {
+                // Save current drawing
+                const tempImageData = this.ctx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+
+                // Create a temporary canvas with the original image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.drawingCanvas.width;
+                tempCanvas.height = this.drawingCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(tempImageData, 0, 0);
+
+                // Resize actual canvas
+                this.drawingCanvas.width = width;
+                this.drawingCanvas.height = height;
+
+                // Reset context properties after resize
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                this.ctx.strokeStyle = this.lineColor;
+                this.ctx.lineWidth = this.lineWidth;
+
+                // Fill with background
+                this.ctx.fillStyle = this.backgroundColor;
+                this.ctx.fillRect(0, 0, width, height);
+
+                // Draw the scaled version of the original image
+                // Use drawImage to automatically scale the content
+                this.ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height,
+                    0, 0, width, height);
+
+                // Clear the canvas when resized, as requested
+                this.clear();
+
+                // Notify update
+                if (this.onDrawingUpdated) {
+                    this.onDrawingUpdated();
+                }
+            }
+
+            // Set grid visibility
+            setGridVisibility(visible) {
+                this.showGrid = visible;
+            }
+
+            // Set grid size
+            setGridSize(size) {
+                this.gridSize = size;
+            }
+        }
+
+        // Symmetry Transform Manager
+        class SymmetryTransform {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+
+                // Parameters for specific symmetry types
+                this.parameters = {
+                    // Default parameters for different symmetry types
+                    p1: { offsetX: 0, offsetY: 0 },
+                    p2: { rotationOrigin: { x: 0.5, y: 0.5 } },
+                    pm: { mirrorAxis: 'horizontal' },
+                    pg: { glideDirection: 'horizontal', glideOffset: 0.5 },
+                    cm: { mirrorOffset: 0.25 },
+                    pmm: { mirrorSpacing: 0.5 },
+                    pmg: { rotationSpacing: 0.5 },
+                    pgg: { glideSpacing: 0.5 },
+                    cmm: { mirrorAngle: 45 },
+                    p4: { rotationCenters: 4 },
+                    p4m: { mirrorCount: 4 },
+                    p4g: { glideCount: 4 },
+                    p3: { rotationSpacing: 0.33 },
+                    p3m1: { mirrorSpacing: 0.33 },
+                    p31m: { mirrorAngle: 60 },
+                    p6: { rotationOrder: 6 },
+                    p6m: { mirrorCount: 6 }
+                };
+            }
+
+            // Get parameters for a specific symmetry type
+            getParameters(type) {
+                return this.parameters[type] || {};
+            }
+
+            // Set a parameter for a symmetry type
+            setParameter(type, paramName, value) {
+                if (!this.parameters[type]) {
+                    this.parameters[type] = {};
+                }
+                this.parameters[type][paramName] = value;
+            }
+
+            // Basic transformation methods
+            rotate(imageData, angle, originX = 0.5, originY = 0.5) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imageData.width;
+                tempCanvas.height = imageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                tempCtx.putImageData(imageData, 0, 0);
+
+                const resultCanvas = document.createElement('canvas');
+                resultCanvas.width = imageData.width;
+                resultCanvas.height = imageData.height;
+                const resultCtx = resultCanvas.getContext('2d');
+
+                // Calculate origin point in pixels
+                const centerX = resultCanvas.width * originX;
+                const centerY = resultCanvas.height * originY;
+
+                resultCtx.translate(centerX, centerY);
+                resultCtx.rotate(angle * Math.PI / 180);
+                resultCtx.drawImage(tempCanvas, -centerX, -centerY);
+
+                return resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            }
+
+            mirror(imageData, horizontal = true) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imageData.width;
+                tempCanvas.height = imageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                tempCtx.putImageData(imageData, 0, 0);
+
+                const resultCanvas = document.createElement('canvas');
+                resultCanvas.width = imageData.width;
+                resultCanvas.height = imageData.height;
+                const resultCtx = resultCanvas.getContext('2d');
+
+                if (horizontal) {
+                    resultCtx.scale(-1, 1);
+                    resultCtx.drawImage(tempCanvas, -tempCanvas.width, 0);
+                } else {
+                    resultCtx.scale(1, -1);
+                    resultCtx.drawImage(tempCanvas, 0, -tempCanvas.height);
+                }
+
+                return resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            }
+
+            translate(imageData, dx, dy) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imageData.width;
+                tempCanvas.height = imageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                tempCtx.putImageData(imageData, 0, 0);
+
+                const resultCanvas = document.createElement('canvas');
+                resultCanvas.width = imageData.width;
+                resultCanvas.height = imageData.height;
+                const resultCtx = resultCanvas.getContext('2d');
+
+                resultCtx.drawImage(tempCanvas, dx, dy);
+
+                return resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            }
+
+            // Apply symmetry transformations
+            applySymmetry(imageData, type) {
+                try {
+                    switch (type) {
+                        case 'p1': return this.p1Transform(imageData);
+                        case 'p2': return this.p2Transform(imageData);
+                        case 'pm': return this.pmTransform(imageData);
+                        case 'pg': return this.pgTransform(imageData);
+                        case 'cm': return this.cmTransform(imageData);
+                        case 'pmm': return this.pmmTransform(imageData);
+                        case 'pmg': return this.pmgTransform(imageData);
+                        case 'pgg': return this.pggTransform(imageData);
+                        case 'cmm': return this.cmmTransform(imageData);
+                        case 'p4': return this.p4Transform(imageData);
+                        case 'p4m': return this.p4mTransform(imageData);
+                        case 'p4g': return this.p4gTransform(imageData);
+                        case 'p3': return this.p3Transform(imageData);
+                        case 'p3m1': return this.p3m1Transform(imageData);
+                        case 'p31m': return this.p31mTransform(imageData);
+                        case 'p6': return this.p6Transform(imageData);
+                        case 'p6m': return this.p6mTransform(imageData);
+                        default: return imageData;
+                    }
+                } catch (error) {
+                    console.error(`Failed to apply symmetry transformation: ${error.message}`);
+                    showErrorNotification("Failed to apply symmetry transformation");
+                    return imageData;
+                }
+            }
+
+            // Specific symmetry group transformations with parameter support
+            p1Transform(imageData) {
+                // No symmetry, but allow offset
+                const params = this.parameters.p1;
+                const offsetX = Math.round(imageData.width * (params.offsetX || 0));
+                const offsetY = Math.round(imageData.height * (params.offsetY || 0));
+
+                if (offsetX === 0 && offsetY === 0) {
+                    return imageData;
+                }
+
+                return this.translate(imageData, offsetX, offsetY);
+            }
+
+            p2Transform(imageData) {
+                // 180-degree rotation symmetry with custom origin
+                const params = this.parameters.p2;
+                const originX = params.rotationOrigin?.x || 0.5;
+                const originY = params.rotationOrigin?.y || 0.5;
+
+                const rotated = this.rotate(imageData, 180, originX, originY);
+                return this.combineTransforms([imageData, rotated]);
+            }
+
+            pmTransform(imageData) {
+                // Mirror symmetry with selectable axis
+                const params = this.parameters.pm;
+                const isHorizontal = params.mirrorAxis !== 'vertical';
+
+                const mirrored = this.mirror(imageData, isHorizontal);
+                return this.combineTransforms([imageData, mirrored]);
+            }
+
+            pgTransform(imageData) {
+                // Glide reflection with direction and offset options
+                const params = this.parameters.pg;
+                const isHorizontal = params.glideDirection !== 'vertical';
+                const offset = params.glideOffset || 0.5;
+
+                const mirrored = this.mirror(imageData, isHorizontal);
+
+                let dx = 0, dy = 0;
+                if (isHorizontal) {
+                    dy = Math.round(imageData.height * offset);
+                } else {
+                    dx = Math.round(imageData.width * offset);
+                }
+
+                const translated = this.translate(mirrored, dx, dy);
+                return this.combineTransforms([imageData, translated]);
+            }
+
+            cmTransform(imageData) {
+                // Rhombic grid mirror symmetry with adjustable offset
+                const params = this.parameters.cm;
+                const offset = params.mirrorOffset || 0.25;
+
+                const mirrored = this.mirror(imageData, true);
+                const dx = Math.round(imageData.width * offset);
+                const dy = Math.round(imageData.height * offset);
+
+                const translated = this.translate(mirrored, dx, dy);
+                return this.combineTransforms([imageData, translated]);
+            }
+
+            pmmTransform(imageData) {
+                // Two perpendicular mirror symmetries with spacing
+                const params = this.parameters.pmm;
+                const spacing = params.mirrorSpacing || 0.5;
+
+                const mirroredH = this.mirror(imageData, true);
+                const mirroredV = this.mirror(imageData, false);
+                const mirroredBoth = this.mirror(mirroredH, false);
+
+                return this.combineTransforms([
+                    imageData,
+                    mirroredH,
+                    mirroredV,
+                    mirroredBoth
+                ]);
+            }
+
+            pmgTransform(imageData) {
+                // Mirrors and rotations with adjustable spacing
+                const params = this.parameters.pmg;
+                const spacing = params.rotationSpacing || 0.5;
+
+                const rotated = this.rotate(imageData, 180);
+                const mirrored = this.mirror(imageData, true);
+                const mirroredRotated = this.mirror(rotated, true);
+
+                return this.combineTransforms([
+                    imageData,
+                    rotated,
+                    mirrored,
+                    mirroredRotated
+                ]);
+            }
+
+            pggTransform(imageData) {
+                // Two perpendicular glide reflections with spacing
+                const params = this.parameters.pgg;
+                const spacing = params.glideSpacing || 0.5;
+
+                const rotated = this.rotate(imageData, 180);
+
+                const dx = Math.round(imageData.width * spacing);
+                const dy = Math.round(imageData.height * spacing);
+
+                const translated1 = this.translate(imageData, dx, 0);
+                const translated2 = this.translate(rotated, 0, dy);
+
+                return this.combineTransforms([
+                    imageData,
+                    rotated,
+                    translated1,
+                    translated2
+                ]);
+            }
+
+            cmmTransform(imageData) {
+                // Rhombic grid with two mirrors and adjustable angle
+                const params = this.parameters.cmm;
+                const angle = params.mirrorAngle || 45;
+
+                const pmmResult = this.pmmTransform(imageData);
+
+                const dx = Math.round(imageData.width * 0.25);
+                const dy = Math.round(imageData.height * 0.25);
+
+                const translated = this.translate(pmmResult, dx, dy);
+                return this.combineTransforms([pmmResult, translated]);
+            }
+
+            p4Transform(imageData) {
+                // 90-degree rotation symmetry with adjustable centers
+                const params = this.parameters.p4;
+                const centers = params.rotationCenters || 4;
+
+                const transforms = [imageData];
+
+                for (let i = 1; i < 4; i++) {
+                    transforms.push(this.rotate(imageData, i * 90));
+                }
+
+                return this.combineTransforms(transforms);
+            }
+
+            p4mTransform(imageData) {
+                // 90-degree rotation and mirror with adjustable count
+                const params = this.parameters.p4m;
+                const mirrorCount = params.mirrorCount || 4;
+
+                const p4Result = this.p4Transform(imageData);
+                const mirrored = this.mirror(p4Result, true);
+
+                return this.combineTransforms([p4Result, mirrored]);
+            }
+
+            p4gTransform(imageData) {
+                // 90-degree rotation and glide reflection with count
+                const params = this.parameters.p4g;
+                const glideCount = params.glideCount || 4;
+
+                const p4Result = this.p4Transform(imageData);
+
+                const dx = Math.round(imageData.width * 0.5);
+                const dy = Math.round(imageData.height * 0.5);
+
+                const translated = this.translate(p4Result, dx, dy);
+                return this.combineTransforms([p4Result, translated]);
+            }
+
+            p3Transform(imageData) {
+                // 120-degree rotation symmetry with spacing
+                const params = this.parameters.p3;
+                const spacing = params.rotationSpacing || 0.33;
+
+                const rotated120 = this.rotate(imageData, 120);
+                const rotated240 = this.rotate(imageData, 240);
+
+                return this.combineTransforms([
+                    imageData,
+                    rotated120,
+                    rotated240
+                ]);
+            }
+
+            p3m1Transform(imageData) {
+                // 120-degree rotation and mirror with spacing
+                const params = this.parameters.p3m1;
+                const spacing = params.mirrorSpacing || 0.33;
+
+                const p3Result = this.p3Transform(imageData);
+                const mirrored = this.mirror(p3Result, true);
+
+                return this.combineTransforms([p3Result, mirrored]);
+            }
+
+            p31mTransform(imageData) {
+                // 120-degree rotation and three mirrors with angle
+                const params = this.parameters.p31m;
+                const angle = params.mirrorAngle || 60;
+
+                const rotated120 = this.rotate(imageData, 120);
+                const rotated240 = this.rotate(imageData, 240);
+                const mirrored = this.mirror(imageData, true);
+                const mirrored120 = this.mirror(rotated120, true);
+                const mirrored240 = this.mirror(rotated240, true);
+
+                return this.combineTransforms([
+                    imageData,
+                    rotated120,
+                    rotated240,
+                    mirrored,
+                    mirrored120,
+                    mirrored240
+                ]);
+            }
+
+            p6Transform(imageData) {
+                // 60-degree rotation symmetry with order
+                const params = this.parameters.p6;
+                const order = params.rotationOrder || 6;
+
+                const transforms = [imageData];
+
+                for (let i = 1; i < order; i++) {
+                    const angle = i * (360 / order);
+                    transforms.push(this.rotate(imageData, angle));
+                }
+
+                return this.combineTransforms(transforms);
+            }
+
+            p6mTransform(imageData) {
+                // 60-degree rotation and mirror with count
+                const params = this.parameters.p6m;
+                const mirrorCount = params.mirrorCount || 6;
+
+                const p6Result = this.p6Transform(imageData);
+                const mirrored = this.mirror(p6Result, true);
+
+                return this.combineTransforms([p6Result, mirrored]);
+            }
+
+            // Optimized combine transforms function
+            combineTransforms(imageDataArray) {
+                // Create new ImageData
+                const resultImageData = new ImageData(
+                    imageDataArray[0].width,
+                    imageDataArray[0].height
+                );
+
+                // Merge all image pixel data
+                for (let i = 0; i < resultImageData.data.length; i += 4) {
+                    // For each pixel, perform merge operation
+                    for (let j = 0; j < imageDataArray.length; j++) {
+                        const srcData = imageDataArray[j].data;
+
+                        // Only merge when source pixel has color
+                        if (srcData[i + 3] > 0) {  // Check alpha channel
+                            resultImageData.data[i] = srcData[i];         // R
+                            resultImageData.data[i + 1] = srcData[i + 1]; // G
+                            resultImageData.data[i + 2] = srcData[i + 2]; // B
+                            resultImageData.data[i + 3] = srcData[i + 3]; // A
+                            break; // Stop after finding first non-transparent pixel
+                        }
+                    }
+                }
+
+                return resultImageData;
+            }
+
+            // Helper method to get symmetry parameter descriptions
+            getParameterConfig(type) {
+                const configs = {
+                    p1: [
+                        { name: 'offsetX', label: 'X Offset', type: 'range', min: 0, max: 1, step: 0.1, default: 0 },
+                        { name: 'offsetY', label: 'Y Offset', type: 'range', min: 0, max: 1, step: 0.1, default: 0 }
+                    ],
+                    p2: [
+                        { name: 'rotationOrigin.x', label: 'Rotation Origin X', type: 'range', min: 0, max: 1, step: 0.1, default: 0.5 },
+                        { name: 'rotationOrigin.y', label: 'Rotation Origin Y', type: 'range', min: 0, max: 1, step: 0.1, default: 0.5 }
+                    ],
+                    pm: [
+                        {
+                            name: 'mirrorAxis', label: 'Mirror Axis', type: 'select', options: [
+                                { value: 'horizontal', label: 'Horizontal' },
+                                { value: 'vertical', label: 'Vertical' }
+                            ], default: 'horizontal'
+                        }
+                    ],
+                    pg: [
+                        {
+                            name: 'glideDirection', label: 'Glide Direction', type: 'select', options: [
+                                { value: 'horizontal', label: 'Horizontal' },
+                                { value: 'vertical', label: 'Vertical' }
+                            ], default: 'horizontal'
+                        },
+                        { name: 'glideOffset', label: 'Glide Offset', type: 'range', min: 0, max: 1, step: 0.1, default: 0.5 }
+                    ],
+                    cm: [
+                        { name: 'mirrorOffset', label: 'Mirror Offset', type: 'range', min: 0, max: 0.5, step: 0.05, default: 0.25 }
+                    ],
+                    pmm: [
+                        { name: 'mirrorSpacing', label: 'Mirror Spacing', type: 'range', min: 0.1, max: 0.9, step: 0.1, default: 0.5 }
+                    ],
+                    pmg: [
+                        { name: 'rotationSpacing', label: 'Rotation Spacing', type: 'range', min: 0.1, max: 0.9, step: 0.1, default: 0.5 }
+                    ],
+                    pgg: [
+                        { name: 'glideSpacing', label: 'Glide Spacing', type: 'range', min: 0.1, max: 0.9, step: 0.1, default: 0.5 }
+                    ],
+                    cmm: [
+                        { name: 'mirrorAngle', label: 'Mirror Angle', type: 'range', min: 15, max: 75, step: 5, default: 45 }
+                    ],
+                    p4: [
+                        { name: 'rotationCenters', label: 'Rotation Centers', type: 'range', min: 1, max: 8, step: 1, default: 4 }
+                    ],
+                    p4m: [
+                        { name: 'mirrorCount', label: 'Mirror Count', type: 'range', min: 2, max: 8, step: 1, default: 4 }
+                    ],
+                    p4g: [
+                        { name: 'glideCount', label: 'Glide Count', type: 'range', min: 2, max: 8, step: 1, default: 4 }
+                    ],
+                    p3: [
+                        { name: 'rotationSpacing', label: 'Rotation Spacing', type: 'range', min: 0.1, max: 0.5, step: 0.05, default: 0.33 }
+                    ],
+                    p3m1: [
+                        { name: 'mirrorSpacing', label: 'Mirror Spacing', type: 'range', min: 0.1, max: 0.5, step: 0.05, default: 0.33 }
+                    ],
+                    p31m: [
+                        { name: 'mirrorAngle', label: 'Mirror Angle', type: 'range', min: 30, max: 90, step: 10, default: 60 }
+                    ],
+                    p6: [
+                        { name: 'rotationOrder', label: 'Rotation Order', type: 'range', min: 3, max: 12, step: 1, default: 6 }
+                    ],
+                    p6m: [
+                        { name: 'mirrorCount', label: 'Mirror Count', type: 'range', min: 3, max: 12, step: 1, default: 6 }
+                    ]
+                };
+
+                return configs[type] || [];
+            }
+        }
+
+        // Pattern Manager Class
+        class PatternManager {
+            constructor(previewCanvas, drawingCanvas) {
+                this.canvas = previewCanvas;
+                this.ctx = previewCanvas.getContext('2d');
+                this.drawingCanvas = drawingCanvas;
+                this.transform = new SymmetryTransform(previewCanvas);
+                this.symmetryType = 'p1';
+                this.gridSize = drawingCanvas.width / 4;
+                this.gridColor = '#ddd';
+                this.lastImageData = null;
+                this.backgroundColor = '#ffffff';
+
+                // Get grid visibility from UI
+                const showGridCheckbox = document.getElementById('showGrid');
+                this.showGrid = showGridCheckbox ? showGridCheckbox.checked : true;
+
+                // Initial update
+                this.updatePreview(null);
+            }
+
+            setGridVisibility(visible) {
+                this.showGrid = visible;
+
+                if (this.lastImageData) {
+                    this.updatePreview(this.lastImageData);
+                }
+            }
+
+            setGridSize(size) {
+                this.gridSize = size;
+
+                // If we have image data, immediately update the preview to reflect grid changes
+                if (this.lastImageData) {
+                    this.updatePreview(this.lastImageData);
+                }
+            }
+
+            setBackgroundColor(color) {
+                this.backgroundColor = color;
+
+                if (this.lastImageData) {
+                    this.updatePreview(this.lastImageData);
+                }
+            }
+
+            drawGrid() {
+                if (!this.showGrid) return;
+
+                this.ctx.save();
+                this.ctx.strokeStyle = this.gridColor;
+                this.ctx.lineWidth = 1;
+
+                // Use the drawing canvas size directly as the grid cell size
+                const previewCellSize = this.drawingCanvas.width;
+
+                // Calculate how many grid lines we need
+                const cols = Math.ceil(this.canvas.width / previewCellSize);
+                const rows = Math.ceil(this.canvas.height / previewCellSize);
+
+                // Draw vertical lines
+                for (let x = 0; x <= cols; x++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x * previewCellSize, 0);
+                    this.ctx.lineTo(x * previewCellSize, this.canvas.height);
+                    this.ctx.stroke();
+                }
+
+                // Draw horizontal lines
+                for (let y = 0; y <= rows; y++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y * previewCellSize);
+                    this.ctx.lineTo(this.canvas.width, y * previewCellSize);
+                    this.ctx.stroke();
+                }
+
+                this.ctx.restore();
+            }
+
+            // Update preview
+            updatePreview(sourceImageData) {
+                // Save image data for later use
+                this.lastImageData = sourceImageData;
+
+                // Clear preview canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Fill with background color
+                this.ctx.fillStyle = this.backgroundColor;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (sourceImageData) {
+                    // Apply symmetry transformation
+                    const transformedPattern = this.transform.applySymmetry(sourceImageData, this.symmetryType);
+                    // Tile the transformed pattern
+                    this.tilePattern(transformedPattern);
+                }
+
+                // Draw grid on top of pattern
+                this.drawGrid();
+            }
+
+            // Tile pattern
+            tilePattern(patternImageData) {
+                if (!patternImageData) return; // Safety check
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = patternImageData.width;
+                tempCanvas.height = patternImageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(patternImageData, 0, 0);
+
+                const cols = Math.ceil(this.canvas.width / patternImageData.width);
+                const rows = Math.ceil(this.canvas.height / patternImageData.height);
+
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        this.ctx.drawImage(
+                            tempCanvas,
+                            x * patternImageData.width,
+                            y * patternImageData.height
+                        );
+                    }
+                }
+            }
+
+            // Set symmetry type
+            setSymmetryType(type) {
+                this.symmetryType = type;
+            }
+
+            // Get parameters for current symmetry type
+            getParameters() {
+                return this.transform.getParameters(this.symmetryType);
+            }
+
+            // Set a parameter for current symmetry type
+            setParameter(paramName, value) {
+                this.transform.setParameter(this.symmetryType, paramName, value);
+                if (this.lastImageData) {
+                    this.updatePreview(this.lastImageData);
+                }
+            }
+
+            // Get parameter configs for UI
+            getParameterConfigs() {
+                return this.transform.getParameterConfig(this.symmetryType);
+            }
+        }
+
+        // Line Tool Class
+        class LineToolManager {
+            constructor(drawingManager) {
+                this.drawingManager = drawingManager;
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.tempCanvas = document.createElement('canvas');
+                this.tempCanvas.width = drawingManager.drawingCanvas.width;
+                this.tempCanvas.height = drawingManager.drawingCanvas.height;
+                this.tempCtx = this.tempCanvas.getContext('2d');
+            }
+
+            start(x, y) {
+                this.isDrawing = true;
+                this.startX = x;
+                this.startY = y;
+
+                // Save current canvas state
+                this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+                this.tempCtx.drawImage(this.drawingManager.drawingCanvas, 0, 0);
+            }
+
+            move(x, y) {
+                if (!this.isDrawing) return;
+
+                const ctx = this.drawingManager.ctx;
+
+                // Clear and restore original state
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.drawImage(this.tempCanvas, 0, 0);
+
+                // Draw new line
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                // Notify preview update
+                if (this.drawingManager.onDrawingUpdated) {
+                    this.drawingManager.onDrawingUpdated();
+                }
+            }
+
+            end(x, y) {
+                if (!this.isDrawing) return;
+
+                this.isDrawing = false;
+
+                // Final line
+                const ctx = this.drawingManager.ctx;
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                // Notify drawing complete
+                if (this.drawingManager.onDrawingComplete) {
+                    this.drawingManager.onDrawingComplete();
+                }
+            }
+
+            // Resize temporary canvas
+            resize(width, height) {
+                this.tempCanvas.width = width;
+                this.tempCanvas.height = height;
+            }
+        }
+
+        // Rectangle Tool Class
+        class RectToolManager {
+            constructor(drawingManager) {
+                this.drawingManager = drawingManager;
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.tempCanvas = document.createElement('canvas');
+                this.tempCanvas.width = drawingManager.drawingCanvas.width;
+                this.tempCanvas.height = drawingManager.drawingCanvas.height;
+                this.tempCtx = this.tempCanvas.getContext('2d');
+            }
+
+            start(x, y) {
+                this.isDrawing = true;
+                this.startX = x;
+                this.startY = y;
+
+                // Save current canvas state
+                this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+                this.tempCtx.drawImage(this.drawingManager.drawingCanvas, 0, 0);
+            }
+
+            move(x, y) {
+                if (!this.isDrawing) return;
+
+                const ctx = this.drawingManager.ctx;
+
+                // Clear and restore original state
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.drawImage(this.tempCanvas, 0, 0);
+
+                // Draw rectangle
+                ctx.beginPath();
+                ctx.rect(
+                    this.startX,
+                    this.startY,
+                    x - this.startX,
+                    y - this.startY
+                );
+                ctx.stroke();
+
+                // Notify preview update
+                if (this.drawingManager.onDrawingUpdated) {
+                    this.drawingManager.onDrawingUpdated();
+                }
+            }
+
+            end(x, y) {
+                if (!this.isDrawing) return;
+
+                this.isDrawing = false;
+
+                // Final rectangle
+                const ctx = this.drawingManager.ctx;
+                ctx.beginPath();
+                ctx.rect(
+                    this.startX,
+                    this.startY,
+                    x - this.startX,
+                    y - this.startY
+                );
+                ctx.stroke();
+
+                // Notify drawing complete
+                if (this.drawingManager.onDrawingComplete) {
+                    this.drawingManager.onDrawingComplete();
+                }
+            }
+
+            // Resize temporary canvas
+            resize(width, height) {
+                this.tempCanvas.width = width;
+                this.tempCanvas.height = height;
+            }
+        }
+
+        // Circle Tool Class
+        class CircleToolManager {
+            constructor(drawingManager) {
+                this.drawingManager = drawingManager;
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.tempCanvas = document.createElement('canvas');
+                this.tempCanvas.width = drawingManager.drawingCanvas.width;
+                this.tempCanvas.height = drawingManager.drawingCanvas.height;
+                this.tempCtx = this.tempCanvas.getContext('2d');
+            }
+
+            start(x, y) {
+                this.isDrawing = true;
+                this.startX = x;
+                this.startY = y;
+
+                // Save current canvas state
+                this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+                this.tempCtx.drawImage(this.drawingManager.drawingCanvas, 0, 0);
+            }
+
+            move(x, y) {
+                if (!this.isDrawing) return;
+
+                const ctx = this.drawingManager.ctx;
+
+                // Clear and restore original state
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.drawImage(this.tempCanvas, 0, 0);
+
+                // Calculate radius
+                const radius = Math.sqrt(
+                    Math.pow(x - this.startX, 2) +
+                    Math.pow(y - this.startY, 2)
+                );
+
+                // Draw circle
+                ctx.beginPath();
+                ctx.arc(this.startX, this.startY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Notify preview update
+                if (this.drawingManager.onDrawingUpdated) {
+                    this.drawingManager.onDrawingUpdated();
+                }
+            }
+
+            end(x, y) {
+                if (!this.isDrawing) return;
+
+                this.isDrawing = false;
+
+                // Calculate final radius
+                const radius = Math.sqrt(
+                    Math.pow(x - this.startX, 2) +
+                    Math.pow(y - this.startY, 2)
+                );
+
+                // Draw final circle
+                const ctx = this.drawingManager.ctx;
+                ctx.beginPath();
+                ctx.arc(this.startX, this.startY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Notify drawing complete
+                if (this.drawingManager.onDrawingComplete) {
+                    this.drawingManager.onDrawingComplete();
+                }
+            }
+
+            // Resize temporary canvas
+            resize(width, height) {
+                this.tempCanvas.width = width;
+                this.tempCanvas.height = height;
+            }
+        }
+
+        // Emoji Tool Class (improved to prevent line drawing)
+        class EmojiToolManager {
+            constructor(drawingManager) {
+                this.drawingManager = drawingManager;
+                this.canvas = drawingManager.drawingCanvas;
+                this.ctx = drawingManager.ctx;
+                this.selectedEmoji = "😊"; // Default emoji
+                this.emojiSize = 20;       // Default size
+
+                // Initialize emoji panel UI
+                this.initEmojiPanel();
+            }
+
+            // Initialize emoji selector panel with larger size
+            initEmojiPanel() {
+                const panel = document.getElementById('emojiPanel');
+                const categoriesContainer = document.getElementById('emojiCategories');
+
+                // Make panel larger
+                panel.style.width = '400px';
+                panel.style.maxHeight = '600px'; // Larger max height to reduce scrollbars
+
+                // Clear existing content
+                panel.innerHTML = '';
+
+                // Create container for search, size control and external link at the top
+                const topControlsDiv = document.createElement('div');
+                topControlsDiv.className = 'emoji-top-controls';
+
+                // Add external emoji link at the top
+                const externalLinkDiv = document.createElement('div');
+                externalLinkDiv.className = 'emoji-external-link';
+                const linkElem = document.createElement('a');
+                linkElem.href = "https://getemoji.com/";
+                linkElem.className = "external-emoji-link";
+                linkElem.target = "_blank";
+                linkElem.id = "get-more-emojis";
+                linkElem.textContent = "Get more emojis from getemoji.com";
+                externalLinkDiv.appendChild(linkElem);
+                topControlsDiv.appendChild(externalLinkDiv);
+
+                // Add size control at the top
+                const sizeControlDiv = document.createElement('div');
+                sizeControlDiv.className = 'emoji-size-control';
+
+                const sizeLabel = document.createElement('label');
+                sizeLabel.setAttribute('for', 'emojiSize');
+                sizeLabel.id = 'emoji-size-label';
+                sizeLabel.textContent = 'Size:';
+
+                const sizeInput = document.createElement('input');
+                sizeInput.type = 'range';
+                sizeInput.id = 'emojiSize';
+                sizeInput.min = '10';
+                sizeInput.max = '50';
+                sizeInput.value = this.emojiSize.toString();
+
+                sizeControlDiv.appendChild(sizeLabel);
+                sizeControlDiv.appendChild(sizeInput);
+                topControlsDiv.appendChild(sizeControlDiv);
+
+                // Add search input 
+                const searchDiv = document.createElement('div');
+                searchDiv.className = 'emoji-search-container';
+
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.className = 'emoji-search';
+                searchInput.id = 'emojiSearch';
+                searchInput.placeholder = 'Search emojis...';
+
+                searchDiv.appendChild(searchInput);
+                topControlsDiv.appendChild(searchDiv);
+
+                // Add the top controls to the panel
+                panel.appendChild(topControlsDiv);
+
+                // Create container for emoji categories
+                const newCategoriesContainer = document.createElement('div');
+                newCategoriesContainer.id = 'emojiCategories';
+                panel.appendChild(newCategoriesContainer);
+
+                // Common emoji categories
+                const categories = [
+                    { name: "Smileys", emojis: ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎"] },
+                    { name: "Animals", emojis: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🐤", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝"] },
+                    { name: "Food", emojis: ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🥑", "🥦", "🥬", "🥒", "🥕", "🧄", "🧅"] },
+                    { name: "Objects", emojis: ["⌚", "📱", "💻", "⌨️", "🖥️", "🖱️", "🖨️", "🖋️", "✏️", "🔍", "💡", "🔦", "🧰", "🔧", "🔨", "⚒️", "🛠️", "⛏️", "🪓", "🔩", "⚙️", "🧱", "⛓️", "📎"] },
+                    { name: "Symbols", emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "💟", "☮️", "✝️", "☪️", "🕉️", "☸️"] },
+                    { name: "Geometric", emojis: ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤", "🔺", "🔻", "💠", "🔘", "🔳", "🔲", "▪️", "▫️", "◾", "◽", "◼️", "◻️", "⬛", "⬜"] },
+                    { name: "Plants", emojis: ["🌵", "🎄", "🌲", "🌳", "🌴", "🌱", "🌿", "☘️", "🍀", "🎍", "🪴", "🎋", "🍃", "🍂", "🍁", "🍄", "🌾", "💐", "🌷", "🌹", "🥀", "🌺", "🌸", "🌼"] }
+                ];
+
+                // Add some additional style
+                const emojiPanelStyle = document.createElement('style');
+                emojiPanelStyle.textContent = `
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+        }
+        
+        .emoji-item {
+            font-size: 24px;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .emoji-top-controls {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        
+        .emoji-external-link {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .emoji-size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .emoji-size-control label {
+            flex-shrink: 0;
+        }
+        
+        .emoji-size-control input {
+            flex-grow: 1;
+        }
+        
+        .emoji-search-container {
+            margin-bottom: 5px;
+        }
+        
+        .emoji-search {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+    `;
+                document.head.appendChild(emojiPanelStyle);
+
+                // Create each category
+                categories.forEach(category => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'emoji-category';
+
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'emoji-category-title';
+                    titleDiv.textContent = category.name;
+                    categoryDiv.appendChild(titleDiv);
+
+                    const emojisDiv = document.createElement('div');
+                    emojisDiv.className = 'emoji-grid';
+
+                    category.emojis.forEach(emoji => {
+                        const emojiItem = document.createElement('div');
+                        emojiItem.className = 'emoji-item';
+                        emojiItem.textContent = emoji;
+                        emojiItem.addEventListener('click', () => {
+                            this.selectedEmoji = emoji;
+                            panel.style.display = 'none';
+                        });
+                        emojisDiv.appendChild(emojiItem);
+                    });
+
+                    categoryDiv.appendChild(emojisDiv);
+                    newCategoriesContainer.appendChild(categoryDiv);
+                });
+
+                // Setup emoji size slider
+                setTimeout(() => {
+                    const sizeSlider = document.getElementById('emojiSize');
+                    if (sizeSlider) {
+                        sizeSlider.addEventListener('input', (e) => {
+                            this.emojiSize = parseInt(e.target.value);
+                        });
+                    }
+
+                    // Setup emoji search
+                    const searchInput = document.getElementById('emojiSearch');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (e) => {
+                            const searchTerm = e.target.value.toLowerCase();
+                            document.querySelectorAll('.emoji-item').forEach(item => {
+                                if (searchTerm === '') {
+                                    item.style.display = 'flex';
+                                } else {
+                                    const shouldShow = item.textContent.includes(searchTerm);
+                                    item.style.display = shouldShow ? 'flex' : 'none';
+                                }
+                            });
+                        });
+                    }
+                }, 100); // Small timeout to ensure elements are created
+
+                // Hide panel initially
+                panel.style.display = 'none';
+            }
+
+            // Show emoji panel directly below the Emoji button
+            showEmojiPanel() {
+                const panel = document.getElementById('emojiPanel');
+                const emojiButton = document.getElementById('emojiTool');
+
+                // Position panel below the Emoji button
+                const buttonRect = emojiButton.getBoundingClientRect();
+                panel.style.position = 'absolute';
+                panel.style.left = `${buttonRect.left}px`;
+                panel.style.top = `${buttonRect.bottom + 5}px`; // 5px space between button and panel
+
+                // Show the panel
+                panel.style.display = 'block';
+            }
+
+            // Hide emoji panel
+            hideEmojiPanel() {
+                const panel = document.getElementById('emojiPanel');
+                panel.style.display = 'none';
+            }
+
+            // Draw emoji at position (only place emoji, no lines)
+            drawEmoji(x, y) {
+                const ctx = this.ctx;
+                ctx.save();
+                ctx.font = `${this.emojiSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.selectedEmoji, x, y);
+                ctx.restore();
+
+                // Notify drawing complete
+                if (this.drawingManager.onDrawingComplete) {
+                    this.drawingManager.onDrawingComplete();
+                }
+            }
+        }
+
+        // Storage Manager - For saving and loading patterns
+        class StorageManager {
+            constructor(drawingManager, patternManager) {
+                this.drawingManager = drawingManager;
+                this.patternManager = patternManager;
+                this.storageKey = 'symmetryPatternData';
+            }
+
+            savePattern(name = 'pattern') {
+                try {
+                    const data = {
+                        name: name || `Pattern ${new Date().toLocaleTimeString()}`,
+                        date: new Date().toISOString(),
+                        imageData: this.drawingManager.getImageData(),
+                        symmetryType: this.patternManager.symmetryType,
+                        backgroundColor: this.drawingManager.backgroundColor,
+                        parameters: this.patternManager.getParameters() // Save symmetry parameters
+                    };
+
+                    // Get existing saved data
+                    let savedPatterns = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+
+                    // Add new data
+                    savedPatterns.push({
+                        name: data.name,
+                        date: data.date,
+                        symmetryType: data.symmetryType,
+                        backgroundColor: data.backgroundColor,
+                        parameters: data.parameters,
+                        // Convert ImageData to dataURL for storage
+                        imageDataUrl: this.imageDataToDataURL(data.imageData)
+                    });
+
+                    // Save back to local storage
+                    localStorage.setItem(this.storageKey, JSON.stringify(savedPatterns));
+
+                    showNotification(`Pattern "${data.name}" saved successfully!`);
+                    return data.name;
+                } catch (error) {
+                    console.error("Failed to save pattern:", error);
+                    showErrorNotification("Failed to save pattern");
+                    return null;
+                }
+            }
+
+            loadPattern(index) {
+                try {
+                    let savedPatterns = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+
+                    if (index >= 0 && index < savedPatterns.length) {
+                        const pattern = savedPatterns[index];
+
+                        // Restore ImageData from dataURL
+                        this.dataURLToImageData(pattern.imageDataUrl, (imageData) => {
+                            // Set symmetry type
+                            this.patternManager.setSymmetryType(pattern.symmetryType);
+                            document.getElementById('symmetryType').value = pattern.symmetryType;
+
+                            // Load symmetry parameters if available
+                            if (pattern.parameters) {
+                                for (const [key, value] of Object.entries(pattern.parameters)) {
+                                    this.patternManager.transform.setParameter(pattern.symmetryType, key, value);
+                                }
+                                // Update parameters UI
+                                updateParametersUI(pattern.symmetryType);
+                            }
+
+                            // Set background color if available
+                            if (pattern.backgroundColor) {
+                                this.drawingManager.setBackgroundColor(pattern.backgroundColor);
+                                this.patternManager.setBackgroundColor(pattern.backgroundColor);
+                                document.getElementById('bgColor').value = pattern.backgroundColor;
+                            }
+
+                            // Restore canvas content
+                            this.drawingManager.ctx.clearRect(
+                                0, 0, this.drawingManager.drawingCanvas.width, this.drawingManager.drawingCanvas.height
+                            );
+                            this.drawingManager.ctx.putImageData(imageData, 0, 0);
+
+                            // Update preview
+                            this.patternManager.updatePreview(imageData);
+
+                            showNotification(`Pattern "${pattern.name}" loaded successfully!`);
+                        });
+
+                        return pattern.name;
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error("Failed to load pattern:", error);
+                    showErrorNotification("Failed to load pattern");
+                    return null;
+                }
+            }
+
+            // Helper method: ImageData to dataURL
+            imageDataToDataURL(imageData) {
+                const canvas = document.createElement('canvas');
+                canvas.width = imageData.width;
+                canvas.height = imageData.height;
+                const ctx = canvas.getContext('2d');
+                ctx.putImageData(imageData, 0, 0);
+                return canvas.toDataURL('image/png');
+            }
+
+            // Helper method: dataURL to ImageData
+            dataURLToImageData(dataURL, callback) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    callback(imageData);
+                };
+                img.src = dataURL;
+            }
+
+            // Get list of saved patterns
+            getSavedPatternsList() {
+                try {
+                    let savedPatterns = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                    return savedPatterns.map((pattern, index) => ({
+                        index: index,
+                        name: pattern.name,
+                        date: new Date(pattern.date).toLocaleString(),
+                        symmetryType: pattern.symmetryType,
+                        imageDataUrl: pattern.imageDataUrl
+                    }));
+                } catch (error) {
+                    console.error("Failed to get saved patterns:", error);
+                    return [];
+                }
+            }
+
+            // Show pattern library UI
+            showPatternLibrary() {
+                try {
+                    const patternsList = this.getSavedPatternsList();
+                    const patternsGrid = document.getElementById('patternsGrid');
+
+                    // Clear existing content
+                    patternsGrid.innerHTML = '';
+
+                    if (patternsList.length === 0) {
+                        patternsGrid.innerHTML = '<p>No saved patterns found.</p>';
+                        return;
+                    }
+
+                    // Add each pattern to the grid
+                    patternsList.forEach(pattern => {
+                        const item = document.createElement('div');
+                        item.className = 'pattern-item';
+
+                        const preview = document.createElement('div');
+                        preview.className = 'pattern-preview';
+                        preview.style.backgroundImage = `url(${pattern.imageDataUrl})`;
+
+                        const info = document.createElement('div');
+                        info.className = 'pattern-info';
+                        info.innerHTML = `
+                       <div>${pattern.name}</div>
+                       <div>${pattern.date}</div>
+                   `;
+
+                        item.appendChild(preview);
+                        item.appendChild(info);
+
+                        // Add click event to load pattern
+                        item.addEventListener('click', () => {
+                            this.loadPattern(pattern.index);
+                            document.getElementById('patternLibrary').style.display = 'none';
+                        });
+
+                        patternsGrid.appendChild(item);
+                    });
+
+                    // Show the modal
+                    document.getElementById('patternLibrary').style.display = 'block';
+                } catch (error) {
+                    console.error("Failed to show pattern library:", error);
+                    showErrorNotification("Failed to load pattern library");
+                }
+            }
+        }
+
+        // Export Manager
+        class ExportManager {
+            constructor(drawingManager, patternManager) {
+                this.drawingManager = drawingManager;
+                this.patternManager = patternManager;
+            }
+
+            // Export single pattern
+            exportSingle() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = this.drawingManager.drawingCanvas.width;
+                    canvas.height = this.drawingManager.drawingCanvas.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(this.drawingManager.drawingCanvas, 0, 0);
+
+                    this.downloadCanvas(canvas, 'pattern-single');
+                } catch (error) {
+                    console.error("Failed to export single pattern:", error);
+                    showErrorNotification("Failed to export pattern");
+                }
+            }
+
+            // Export tiled pattern
+            exportTiled() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = this.patternManager.canvas.width;
+                    canvas.height = this.patternManager.canvas.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(this.patternManager.canvas, 0, 0);
+
+                    this.downloadCanvas(canvas, 'pattern-tiled');
+                } catch (error) {
+                    console.error("Failed to export tiled pattern:", error);
+                    showErrorNotification("Failed to export pattern");
+                }
+            }
+
+            // Download canvas content
+            downloadCanvas(canvas, filename) {
+                const link = document.createElement('a');
+                link.download = `${filename}-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        }
+
+        // History Manager
+        class HistoryManager {
+            constructor(drawingManager, patternManager) {
+                this.drawingManager = drawingManager;
+                this.patternManager = patternManager;
+                this.history = [];
+                this.currentIndex = -1;
+                this.maxHistory = 20;
+
+                // Bind buttons
+                this.undoBtn = document.getElementById('undoBtn');
+                this.redoBtn = document.getElementById('redoBtn');
+
+                // Set up event listeners
+                this.setupEventListeners();
+
+                // Add initial state
+                this.addToHistory();
+            }
+
+            setupEventListeners() {
+                // Bind button click events
+                this.undoBtn.addEventListener('click', () => this.undo());
+                this.redoBtn.addEventListener('click', () => this.redo());
+
+                // Bind keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 'z') {
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                this.redo();
+                            } else {
+                                this.undo();
+                            }
+                        } else if (e.key === 'y') {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                    }
+                });
+            }
+
+            addToHistory() {
+                const imageData = this.drawingManager.getImageData();
+
+                // Delete history after current position
+                this.history = this.history.slice(0, this.currentIndex + 1);
+
+                // Add new state
+                this.history.push(imageData);
+
+                // Maintain history size
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                    this.currentIndex = Math.max(0, this.currentIndex - 1);
+                } else {
+                    this.currentIndex = this.history.length - 1;
+                }
+
+                this.updateButtons();
+            }
+
+            undo() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    this.restoreState();
+                }
+            }
+
+            redo() {
+                if (this.currentIndex < this.history.length - 1) {
+                    this.currentIndex++;
+                    this.restoreState();
+                }
+            }
+
+            restoreState() {
+                if (this.currentIndex >= 0 && this.currentIndex < this.history.length) {
+                    const imageData = this.history[this.currentIndex];
+                    const ctx = this.drawingManager.ctx;
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.putImageData(imageData, 0, 0);
+
+                    // Update preview
+                    this.patternManager.updatePreview(imageData);
+                }
+
+                this.updateButtons();
+            }
+
+            updateButtons() {
+                // Update button states
+                this.undoBtn.disabled = this.currentIndex <= 0;
+                this.redoBtn.disabled = this.currentIndex >= this.history.length - 1;
+            }
+        }
+
+        // Performance Manager
+        class PerformanceManager {
+            constructor() {
+                this.cache = new Map();
+                this.maxCacheSize = 50;
+                this.lastFrameTime = 0;
+                this.debounceTimeout = null;
+            }
+
+            // Cache management
+            getCachedResult(key) {
+                return this.cache.get(key);
+            }
+
+            setCacheResult(key, value) {
+                if (this.cache.size >= this.maxCacheSize) {
+                    const firstKey = this.cache.keys().next().value;
+                    this.cache.delete(firstKey);
+                }
+                this.cache.set(key, value);
+            }
+
+            // Debounce handler
+            debounce(func, wait) {
+                clearTimeout(this.debounceTimeout);
+                this.debounceTimeout = setTimeout(func, wait);
+            }
+
+            // Throttle handler
+            throttle(func, limit) {
+                const now = Date.now();
+                if (now - this.lastFrameTime >= limit) {
+                    func();
+                    this.lastFrameTime = now;
+                }
+            }
+
+            // Clear cache
+            clearCache() {
+                this.cache.clear();
+            }
+        }
+
+        // Create Symmetry Parameters UI
+        function createParametersUI(symmetryType, patternManager) {
+            const parametersContent = document.getElementById('parametersContent');
+            parametersContent.innerHTML = '';
+
+            const paramConfigs = patternManager.getParameterConfigs();
+            if (!paramConfigs || paramConfigs.length === 0) {
+                document.getElementById('symmetryParameters').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('symmetryParameters').style.display = 'block';
+
+            paramConfigs.forEach(config => {
+                const controlDiv = document.createElement('div');
+                controlDiv.className = 'control-group parameter-control';
+
+                // Create label
+                const label = document.createElement('label');
+                label.textContent = config.label;
+                controlDiv.appendChild(label);
+
+                // Create input based on type
+                let input;
+
+                if (config.type === 'range') {
+                    input = document.createElement('input');
+                    input.type = 'range';
+                    input.min = config.min;
+                    input.max = config.max;
+                    input.step = config.step;
+
+                    // Create value display
+                    const valueDisplay = document.createElement('span');
+                    valueDisplay.className = 'parameter-value';
+                    valueDisplay.textContent = config.default;
+                    controlDiv.appendChild(valueDisplay);
+
+                    // Update value display when range changes
+                    input.addEventListener('input', e => {
+                        const value = parseFloat(e.target.value);
+                        valueDisplay.textContent = value;
+
+                        // Handle nested properties with dot notation
+                        if (config.name.includes('.')) {
+                            const [obj, prop] = config.name.split('.');
+                            const params = patternManager.getParameters();
+                            if (!params[obj]) params[obj] = {};
+                            params[obj][prop] = value;
+                            patternManager.setParameter(obj, params[obj]);
+                        } else {
+                            patternManager.setParameter(config.name, value);
+                        }
+                    });
+                } else if (config.type === 'select') {
+                    input = document.createElement('select');
+
+                    config.options.forEach(option => {
+                        const optElement = document.createElement('option');
+                        optElement.value = option.value;
+                        optElement.textContent = option.label;
+                        input.appendChild(optElement);
+                    });
+
+                    input.addEventListener('change', e => {
+                        patternManager.setParameter(config.name, e.target.value);
+                    });
+                }
+
+                // Set default value
+                if (config.default !== undefined) {
+                    if (config.name.includes('.')) {
+                        const [obj, prop] = config.name.split('.');
+                        const params = patternManager.getParameters();
+                        if (params[obj] && params[obj][prop] !== undefined) {
+                            input.value = params[obj][prop];
+                        } else {
+                            input.value = config.default;
+                        }
+                    } else {
+                        const params = patternManager.getParameters();
+                        input.value = params[config.name] !== undefined ? params[config.name] : config.default;
+                    }
+                }
+
+                controlDiv.appendChild(input);
+                parametersContent.appendChild(controlDiv);
+            });
+        }
+
+        // Function to update parameters UI when symmetry type changes
+        function updateParametersUI(symmetryType) {
+            createParametersUI(symmetryType, patternManager);
+        }
+
+        // Error notification function
+        function showErrorNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'error-notification';
+            notification.textContent = message;
+
+            // Styling
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = '#f44336';
+            notification.style.color = 'white';
+            notification.style.padding = '15px';
+            notification.style.borderRadius = '4px';
+            notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            notification.style.zIndex = '1000';
+            notification.style.maxWidth = '300px';
+
+            // Add to DOM
+            document.body.appendChild(notification);
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 5000);
+        }
+
+        // Success notification function
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+
+            // Styling
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = '#4CAF50';
+            notification.style.color = 'white';
+            notification.style.padding = '15px';
+            notification.style.borderRadius = '4px';
+            notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            notification.style.zIndex = '1000';
+            notification.style.maxWidth = '300px';
+
+            // Add to DOM
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 3000);
+        }
+
+        // Initialize all managers
+        const drawingManager = new DrawingManager(drawingCanvas);
+        const patternManager = new PatternManager(previewCanvas, drawingCanvas);
+        const performanceManager = new PerformanceManager();
+        const exportManager = new ExportManager(drawingManager, patternManager);
+        const historyManager = new HistoryManager(drawingManager, patternManager);
+        const lineToolManager = new LineToolManager(drawingManager);
+        const rectToolManager = new RectToolManager(drawingManager);
+        const circleToolManager = new CircleToolManager(drawingManager);
+        const emojiToolManager = new EmojiToolManager(drawingManager);
+        const storageManager = new StorageManager(drawingManager, patternManager);
+
+        // Set up drawing update event
+        drawingManager.onDrawingUpdated = () => {
+            performanceManager.throttle(() => {
+                patternManager.updatePreview(drawingManager.getImageData());
+            }, 16);
+        };
+
+        drawingManager.onDrawingComplete = () => {
+            historyManager.addToHistory();
+        };
+
+        // Record history on clear
+        drawingManager.onClear = () => {
+            historyManager.addToHistory();
+            patternManager.updatePreview(null);
+        };
+
+        // Set up tab system
+        setupTabs();
+
+        // Event binding for symmetry selector
+        document.getElementById('symmetryType').addEventListener('change', (e) => {
+            patternManager.setSymmetryType(e.target.value);
+            updateParametersUI(e.target.value);
+            patternManager.updatePreview(drawingManager.getImageData());
+        });
+
+        // Event binding for grid visibility
+        document.getElementById('showGrid').addEventListener('change', (e) => {
+            patternManager.setGridVisibility(e.target.checked);
+        });
+
+        // Event binding for canvas size with clearing functionality
+        document.getElementById('canvasSize').addEventListener('input', (e) => {
+            const size = parseInt(e.target.value);
+            document.getElementById('canvasSizeValue').textContent = `${size} x ${size}`;
+
+            // Update canvas container size
+            const canvasContainer = document.getElementById('canvasContainer');
+            canvasContainer.style.width = `${size}px`;
+            canvasContainer.style.height = `${size}px`;
+
+            // Resize drawing canvas - clear happens automatically in the resizeCanvas method
+            drawingManager.resizeCanvas(size, size);
+
+            // Resize tool temporary canvases
+            lineToolManager.resize(size, size);
+            rectToolManager.resize(size, size);
+            circleToolManager.resize(size, size);
+
+            // Set grid size to 1/4 of the canvas size
+            const newGridSize = size / 4;
+            patternManager.setGridSize(newGridSize);
+        });
+
+        // Event binding for background color
+        document.getElementById('bgColor').addEventListener('input', (e) => {
+            const color = e.target.value;
+            drawingManager.setBackgroundColor(color);
+            patternManager.setBackgroundColor(color);
+        });
+
+        // Language selector event
+        document.getElementById('languageSelector').addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+        });
+
+        // Tool selection events
+        document.getElementById('pencilTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            drawingManager.setTool('pencil');
+            emojiToolManager.hideEmojiPanel();
+
+            // Reset event handlers
+            drawingCanvas.onpointerdown = drawingManager.startDrawing.bind(drawingManager);
+            drawingCanvas.onpointermove = drawingManager.draw.bind(drawingManager);
+            drawingCanvas.onpointerup = drawingManager.stopDrawing.bind(drawingManager);
+            drawingCanvas.onclick = null; // Remove emoji click handler
+        });
+
+        document.getElementById('eraserTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            drawingManager.setTool('eraser');
+            emojiToolManager.hideEmojiPanel();
+
+            // Reset event handlers
+            drawingCanvas.onpointerdown = drawingManager.startDrawing.bind(drawingManager);
+            drawingCanvas.onpointermove = drawingManager.draw.bind(drawingManager);
+            drawingCanvas.onpointerup = drawingManager.stopDrawing.bind(drawingManager);
+            drawingCanvas.onclick = null; // Remove emoji click handler
+        });
+
+        document.getElementById('clearTool').addEventListener('click', () => {
+            drawingManager.clear();
+            emojiToolManager.hideEmojiPanel();
+        });
+
+        // Line tool events
+        document.getElementById('lineTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            drawingManager.setTool('pencil'); // Just to set proper color/width
+            emojiToolManager.hideEmojiPanel();
+
+            // Remove any existing event handlers
+            drawingCanvas.onpointerdown = null;
+            drawingCanvas.onpointermove = null;
+            drawingCanvas.onpointerup = null;
+            drawingCanvas.onclick = null;
+
+            // Set new event handlers for line tool only
+            drawingCanvas.onpointerdown = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                lineToolManager.start(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointermove = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                lineToolManager.move(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointerup = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                lineToolManager.end(pos.x, pos.y);
+            };
+        });
+
+        // Rectangle tool events
+        document.getElementById('rectTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            drawingManager.setTool('pencil'); // Just to set proper color/width
+            emojiToolManager.hideEmojiPanel();
+
+            // Remove any existing event handlers
+            drawingCanvas.onpointerdown = null;
+            drawingCanvas.onpointermove = null;
+            drawingCanvas.onpointerup = null;
+            drawingCanvas.onclick = null;
+
+            // Set new event handlers for rectangle tool only
+            drawingCanvas.onpointerdown = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                rectToolManager.start(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointermove = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                rectToolManager.move(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointerup = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                rectToolManager.end(pos.x, pos.y);
+            };
+        });
+
+        // Circle tool events
+        document.getElementById('circleTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            drawingManager.setTool('pencil'); // Just to set proper color/width
+            emojiToolManager.hideEmojiPanel();
+
+            // Remove any existing event handlers
+            drawingCanvas.onpointerdown = null;
+            drawingCanvas.onpointermove = null;
+            drawingCanvas.onpointerup = null;
+            drawingCanvas.onclick = null;
+
+            // Set new event handlers for circle tool only
+            drawingCanvas.onpointerdown = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                circleToolManager.start(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointermove = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                circleToolManager.move(pos.x, pos.y);
+            };
+
+            drawingCanvas.onpointerup = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                circleToolManager.end(pos.x, pos.y);
+            };
+        });
+
+        // Emoji tool events
+        document.getElementById('emojiTool').addEventListener('click', (e) => {
+            document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Show emoji panel below the button
+            emojiToolManager.showEmojiPanel();
+
+            // Remove any existing event handlers
+            drawingCanvas.onpointerdown = null;
+            drawingCanvas.onpointermove = null;
+            drawingCanvas.onpointerup = null;
+
+            // Set up click handler for placing emojis only
+            drawingCanvas.onclick = (e) => {
+                const pos = drawingManager.getPointerPosition(e);
+                emojiToolManager.drawEmoji(pos.x, pos.y);
+
+                // Update the preview
+                if (drawingManager.onDrawingUpdated) {
+                    drawingManager.onDrawingUpdated();
+                }
+            };
+        });
+
+        document.getElementById('lineWidth').addEventListener('input', (e) => {
+            const width = parseInt(e.target.value);
+            drawingManager.setLineWidth(width);
+        });
+
+        document.getElementById('lineColor').addEventListener('input', (e) => {
+            drawingManager.setLineColor(e.target.value);
+        });
+
+        // Bind export button events
+        document.getElementById('exportSingleBtn').addEventListener('click', () => {
+            exportManager.exportSingle();
+        });
+
+        document.getElementById('exportTiledBtn').addEventListener('click', () => {
+            exportManager.exportTiled();
+        });
+
+        // Bind save & load events
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const name = document.getElementById('patternName').value;
+            storageManager.savePattern(name);
+        });
+
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            storageManager.showPatternLibrary();
+        });
+
+        // Pattern library & help modal events
+        document.getElementById('openLibraryBtn').addEventListener('click', () => {
+            // Initialize the pattern library content first
+            storageManager.showPatternLibrary();
+            // Then make the modal visible
+            document.getElementById('patternLibrary').style.display = 'block';
+        });
+
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            document.getElementById('helpModal').style.display = 'block';
+        });
+
+        document.getElementById('closeLibraryBtn').addEventListener('click', () => {
+            document.getElementById('patternLibrary').style.display = 'none';
+        });
+
+        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+            document.getElementById('helpModal').style.display = 'none';
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // Add keyboard event
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete') {
+                drawingManager.clear();
+            }
+
+            // Close emoji panel with Escape key
+            if (e.key === 'Escape') {
+                emojiToolManager.hideEmojiPanel();
+
+                // Also close any open modal
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+
+        // Close emoji panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#emojiPanel') && !e.target.closest('#emojiTool')) {
+                emojiToolManager.hideEmojiPanel();
+            }
+        });
+
+        // Initialize symmetry parameters UI
+        updateParametersUI('p1');
+
+        // DOMContentLoaded event to make sure everything is initialized after the DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize with an empty canvas
+            drawingManager.clear();
+
+            // Make sure pattern library button works
+            const libraryButton = document.getElementById('openLibraryBtn');
+            if (libraryButton) {
+                libraryButton.addEventListener('click', () => {
+                    storageManager.showPatternLibrary();
+                    document.getElementById('patternLibrary').style.display = 'block';
+                });
+            }
+
+            // Set initial language to English
+            updateLanguage('en');
+
+            // Set initial canvas size value display
+            document.getElementById('canvasSizeValue').textContent = `${drawingCanvas.width} x ${drawingCanvas.height}`;
+
+            // Show a welcome message
+            showNotification("Welcome to Symmetry Pattern Generator! Start drawing to create beautiful patterns.");
+        });
+
+        // Initialize with an empty canvas
+        drawingManager.clear();
+
+        // Show a welcome message
+        showNotification("Welcome to Symmetry Pattern Generator! Start drawing to create beautiful patterns.");
+
+        // Enable tooltips for buttons (optional)
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            if (button.id) {
+                button.title = button.textContent.trim();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Recalculate canvas sizes if needed
+            patternManager.updatePreview(drawingManager.getImageData());
+        });
+    </script>
+</body>
+
+</html>
